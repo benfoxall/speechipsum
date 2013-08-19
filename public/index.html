@@ -10,8 +10,126 @@
       <div class="page-header">
         <h1>
           <a href="http://www.speechipsum.com/">Speechipsum</a>
+          <small>create ipsums by speaking to your computer</small>
         </h1>
       </div>
+
+      <p>
+        <button id="speak" class="btn btn-primary"><span class="glyphicon glyphicon-search"></span>Start listening</button>
+        <small id="help">This requires webkitSpeechRecognition (ie. Chrome)</small>
+      </p>
+      
+
+      <div class="form">
+        <div class="form-group">
+          <textarea class="form-control" id="source" rows="5" placeholder="don't feel like talking? Be old-fashioned and type some words in here"></textarea>
+        </div>
+      </div>
+
+      <hr />
+
+      <blockquote>
+        <p id="output"></p>
+      </blockquote>
     </div>
+
+    <script type="text/javascript">
+      function Ipsum(){}
+      Ipsum.prototype = {
+        source:  function(text){
+          this.tokens = text.split(/\s/);
+          this.map = {}
+
+          var tok, prior = '';
+          for (var i = 0; i < this.tokens.length; i++) {
+            tok = this.tokens[i];
+
+            this.map[prior] = this.map[prior] || {};
+            this.map[prior][tok] = (this.map[prior][tok] || 0) + 1;
+
+            prior = tok;
+          };
+
+          // generate
+          prior='';
+          this.output = '';
+
+          var paragraphs = 3;
+          while(paragraphs--){
+              var countdown = 60
+              while(countdown--){
+                var options = Object.keys(this.map[prior]),
+                    i = Math.floor(Math.random()*(options.length));
+                //random for now
+
+                this.output += options[i] + ' '
+                prior = this.map[options[i]] ? options[i] : '';
+              }
+
+              this.output += '\n\n'
+          }
+          // console.log(this.output);
+        }
+      }
+
+
+      var ipsum = new Ipsum();
+
+      function update(){
+        ipsum.source(source.value)        
+
+        output.innerText = ipsum.output;
+      }
+
+      // update when someone types in the input
+      source.addEventListener('keyup', update, false);
+
+      if('webkitSpeechRecognition' in window ){
+
+
+        var final_transcript = '',
+            recognition = new webkitSpeechRecognition();
+
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        recognition.onstart = function() {
+          speak.innerText = 'Speak now'
+          speak.className = 'btn btn-primary disabled';
+        }
+
+        recognition.onend = function() {
+          speak.innerText = 'Start listening'
+          speak.className = 'btn btn-primary';
+        }
+
+        recognition.onresult = function(event) {
+          var interim_transcript = '';
+
+          for (var i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              final_transcript += event.results[i][0].transcript;
+            } else {
+              interim_transcript += event.results[i][0].transcript;
+            }
+          }
+          source.value = final_transcript + ' ' + interim_transcript;
+
+          update()
+        };
+
+        speak.addEventListener('click', function(){
+          recognition.start()
+        }, false)
+
+
+      } else {
+        //awww
+        speak.className = 'btn btn-primary disabled';
+        help.className = 'text-danger'
+      }
+
+
+    </script>
   </body>
 </html>
