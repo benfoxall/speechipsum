@@ -3,7 +3,8 @@
   <head>
     <title>Speechipsum</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0-wip/css/bootstrap.min.css">
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet">
   </head>
   <body>
 
@@ -20,7 +21,9 @@
       <div class="row">
         <div class="col-md-12">
           <p>
-            <button id="speak" class="btn btn-primary btn-lg"><span class="glyphicon glyphicon-search"></span>Start listening</button>
+            <button id="speak" class="btn btn-primary btn-lg">
+              Start listening <span class="glyphicon glyphicon-play"></span> 
+            </button>
           </p>
 
           <p id="help">
@@ -52,55 +55,58 @@
     </div>
 
     <script type="text/javascript">
-      function Ipsum(){}
-      Ipsum.prototype = {
-        source:  function(text){
-          this.tokens = text.split(/\s/);
-          this.map = {}
+      function ipsum(text){
 
-          var tok, prior = '';
-          for (var i = 0; i < this.tokens.length; i++) {
-            tok = this.tokens[i];
+        return function(paragraphs, words_per_paragraph){
 
-            this.map[prior] = this.map[prior] || {};
-            this.map[prior][tok] = (this.map[prior][tok] || 0) + 1;
+          var tokens = text.split(/\s/),
+              map = {},
+              tok,
+              prior='';
+              out = '';
+
+          for (var i = 0; i < tokens.length; i++) {
+            tok = tokens[i];
+
+            map[prior] = map[prior] || {};
+            map[prior][tok] = (map[prior][tok] || 0) + 1;
 
             prior = tok;
           };
 
           // generate
-          prior='';
-          this.output = '';
+          prior = '';
+          paragraphs = paragraphs || 3;
+          words_per_paragraph = words_per_paragraph || 60;
 
-          var paragraphs = 3;
           while(paragraphs--){
-              var countdown = 60
+              var countdown = words_per_paragraph;
               while(countdown--){
-                var options = Object.keys(this.map[prior]),
+                var options = Object.keys(map[prior]),
                     i = Math.floor(Math.random()*(options.length));
                 //random for now
 
-                this.output += options[i] + ' '
-                prior = this.map[options[i]] ? options[i] : '';
+                out += options[i] + ' '
+                prior = map[options[i]] ? options[i] : '';
               }
 
-              this.output += '\n\n'
+              out += '\n\n'
           }
-          // console.log(this.output);
+
+          return out;
         }
       }
 
-
-      var ipsum = new Ipsum();
-
       function update(){
-        ipsum.source(source.value)        
-
-        output.innerText = ipsum.output;
+        output.innerText = ipsum(source.value)();
       }
 
       // update when someone types in the input
-      source.addEventListener('keyup', update, false);
+      if (source.addEventListener){
+        source.addEventListener('keyup', update, false); 
+      } else if (source.attachEvent){
+        source.attachEvent('onkeyup', update);
+      }
 
       // all from - http://updates.html5rocks.com/tag/voice
       if('webkitSpeechRecognition' in window ){
@@ -128,12 +134,13 @@
 
         recognition.onstart = function() {
           speak.innerText = 'Stop listening'
+          speak.innerHTML = 'Stop listening <span class="glyphicon glyphicon-stop"></span>';
           speak.className = 'btn btn-danger btn-lg';
           started = true;
         }
 
         recognition.onend = function() {
-          speak.innerText = 'Start listening'
+          speak.innerHTML = 'Start listening <span class="glyphicon glyphicon-play"></span>';
           speak.className = 'btn btn-primary btn-lg';
           started = false;
         }
@@ -148,7 +155,7 @@
 
       } else {
         //awww
-        speak.className = 'btn btn-primary disabled';
+        speak.className = 'btn btn-primary btn-lg disabled';
         help.className = 'text-danger'
       }
 
