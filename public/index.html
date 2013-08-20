@@ -6,36 +6,48 @@
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0-wip/css/bootstrap.min.css">
   </head>
   <body>
-    <div class="container">
-      <div class="page-header">
+
+    <div class="jumbotron">
+      <div class="container">
         <h1>
           <a href="http://www.speechipsum.com/">Speechipsum</a>
-          <small>create ipsums by speaking to your computer</small>
         </h1>
+        <p>create ipsums by speaking to your computer</p>
       </div>
+    </div>
 
-      <p>
-        <button id="speak" class="btn btn-primary"><span class="glyphicon glyphicon-search"></span>Start listening</button>
-        <small id="help">This requires webkitSpeechRecognition (ie. Chrome)</small>
-      </p>
-      
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <p>
+            <button id="speak" class="btn btn-primary btn-lg"><span class="glyphicon glyphicon-search"></span>Start listening</button>
+          </p>
 
-      <div class="form">
-        <div class="form-group">
-          <textarea class="form-control" id="source" rows="5" placeholder="don't feel like talking? Be old-fashioned and type some words in here"></textarea>
+            <p id="help">This requires webkitSpeechRecognition (ie. chrome desktop)</p>
+          
+
+          <div class="form">
+            <div class="form-group">
+              <textarea class="form-control" id="source" rows="5" placeholder="don't feel like talking? Be old-fashioned and type some words in here"></textarea>
+            </div>
+          </div>
+
+          <hr />
+
+          <blockquote class="well">
+            <p id="output"></p>
+          </blockquote>
+
+          <hr />
+
+          <footer>
+            <small>
+              hacked together by <a href="https://twitter.com/benjaminbenben">@benjaminbenben</a>
+            </small>
+          </footer>
+
         </div>
       </div>
-
-      <hr />
-
-      <blockquote>
-        <p id="output"></p>
-      </blockquote>
-
-
-      <hr />
-
-      <p><small>hacked together by <a href="https://twitter.com/benjaminbenben">@benjaminbenben</a></small></p>
     </div>
 
     <script type="text/javascript">
@@ -89,24 +101,14 @@
       // update when someone types in the input
       source.addEventListener('keyup', update, false);
 
+      // all from - http://updates.html5rocks.com/tag/voice
       if('webkitSpeechRecognition' in window ){
-
-
-        var final_transcript = '',
+        var started,
+            final_transcript = '',
             recognition = new webkitSpeechRecognition();
 
         recognition.continuous = true;
         recognition.interimResults = true;
-
-        recognition.onstart = function() {
-          speak.innerText = 'Speak now'
-          speak.className = 'btn btn-primary disabled';
-        }
-
-        recognition.onend = function() {
-          speak.innerText = 'Start listening'
-          speak.className = 'btn btn-primary';
-        }
 
         recognition.onresult = function(event) {
           var interim_transcript = '';
@@ -123,8 +125,23 @@
           update()
         };
 
+        recognition.onstart = function() {
+          speak.innerText = 'Stop listening'
+          speak.className = 'btn btn-danger btn-lg';
+          started = true;
+        }
+
+        recognition.onend = function() {
+          speak.innerText = 'Start listening'
+          speak.className = 'btn btn-primary btn-lg';
+          started = false;
+        }
+
         speak.addEventListener('click', function(){
-          recognition.start()
+          if(!started)
+            recognition.start()
+          else
+            recognition.stop()
         }, false)
 
 
